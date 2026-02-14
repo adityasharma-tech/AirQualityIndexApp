@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   const payload = (await request.json()) as DataTable;
 console.log(payload);
+  //@ts-ignore
   delete payload.id;
   try {
     if (payload.lng == 0 || payload.lat == 0)
