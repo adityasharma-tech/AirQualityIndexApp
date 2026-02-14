@@ -1,4 +1,5 @@
 import * as t from "drizzle-orm/pg-core";
+import { db } from ".";
 
 export const dataTable = t.pgTable("data", {
     id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -9,5 +10,7 @@ export const dataTable = t.pgTable("data", {
     humidity: t.integer().notNull(),
     temperature: t.integer().notNull(),
     co: t.integer().notNull(),
-    co2: t.integer().notNull()
+    co2: t.integer().notNull(),
+    pressure: t.integer().notNull(),
+    bmpAltitude: t.integer().default(0)
 })

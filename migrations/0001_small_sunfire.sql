@@ -1,0 +1,1 @@
+ALTER TABLE "data" ADD COLUMN "pressure" integer NOT NULL;
