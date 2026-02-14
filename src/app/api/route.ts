@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
 console.log(payload);
   //@ts-ignore
   delete payload.id;
+  payload.timestamp = new Date();
   try {
     if (payload.lng == 0 || payload.lat == 0)
       return NextResponse.json({ success: false }, { status: 406 });
