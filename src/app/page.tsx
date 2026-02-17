@@ -131,23 +131,26 @@ export default function MapPage() {
     }));
   };
 
-  const fetchData = async () => {
-    if (!map) return;
-
-    const bounds = map.getBounds();
+  const fetchDataWithMap = async (mapInstance: google.maps.Map) => {
+    console.log("fetching")
+    
+    const bounds = mapInstance.getBounds();
     if (!bounds) return;
 
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
 
-    const res = await fetch(
-      `/api/query?north=${ne.lat()}&south=${sw.lat()}&east=${ne.lng()}&west=${sw.lng()}`,
-    );
+    try {
+      const res = await fetch(
+        `/api/query?north=${ne.lat()}&south=${sw.lat()}&east=${ne.lng()}&west=${sw.lng()}`,
+      );
 
-    const data = await res.json();
-
-    const clustered = clusterPoints(data, 80);
-    setPoints(clustered);
+      const data = await res.json();
+      const clustered = clusterPoints(data, 80);
+      setPoints(clustered);
+    } catch (err) {
+      console.error("Fetch failed:", err);
+    }
   };
 
   const getColor = (co2: number) => {
@@ -334,20 +337,26 @@ export default function MapPage() {
     ],
   };
 
-  React.useEffect(()=>{
-    fetchData()
-  }, [map])
-
   if (!isLoaded) return <div>Loading...</div>;
 
   return (
     <>
-
       <GoogleMap
         mapContainerStyle={containerStyle}
         zoom={14}
         center={{ lat: 28.477064, lng: 77.4819197 }}
-        onLoad={(m) => setMap(m)}
+        onLoad={(m) => {
+          setMap(m);
+
+          // Initial load (only once)
+          fetchDataWithMap(m);
+
+          // Fetch only when user stops dragging
+          // m.addListener("dragend", () => fetchDataWithMap(m));
+
+          // Fetch when zoom changes
+          m.addListener("zoom_changed", () => fetchDataWithMap(m));
+        }}
         options={mapOptions}
       >
         {points.map((cluster, index) => (
