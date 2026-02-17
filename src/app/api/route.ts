@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { DataTable, dataTable } from "@/db/schema";
+import { dataTable } from "@/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -8,6 +8,11 @@ export async function POST(request: NextRequest) {
 
   delete payload.id;
   delete payload.timestamp;
+
+  if(payload.lat > 90 || payload.lng > 180){
+    payload.lat = payload.lat / 1000000.0;
+    payload.lng = payload.lng / 1000000.0;
+  }
 
   try {
     if (payload.lng == 0 || payload.lat == 0)
