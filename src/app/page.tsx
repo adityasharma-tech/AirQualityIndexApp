@@ -336,7 +336,7 @@ export default function MapPage() {
 
   React.useEffect(()=>{
     fetchData()
-  }, [])
+  }, [map])
 
   if (!isLoaded) return <div>Loading...</div>;
 
