@@ -334,25 +334,14 @@ export default function MapPage() {
     ],
   };
 
+  React.useEffect(()=>{
+    fetchData()
+  }, [])
+
   if (!isLoaded) return <div>Loading...</div>;
 
   return (
     <>
-      <button
-        onClick={fetchData}
-        style={{
-          position: "absolute",
-          zIndex: 999,
-          top: 20,
-          left: 20,
-          padding: "10px 15px",
-          background: "#000",
-          color: "#fff",
-          borderRadius: "8px",
-        }}
-      >
-        Load Data
-      </button>
 
       <GoogleMap
         mapContainerStyle={containerStyle}
