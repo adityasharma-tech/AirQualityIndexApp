@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   GoogleMap,
   useJsApiLoader,
@@ -31,6 +31,7 @@ export default function MapPage() {
 
   const [map, setMap] = React.useState<google.maps.Map | null>(null);
   const [points, setPoints] = React.useState<any[]>([]);
+  const pointsRef = React.useRef<any[]>([]);
   const [selected, setSelected] = React.useState<any | null>(null);
 
   const getConvexHull = (points: any[]) => {
@@ -132,8 +133,8 @@ export default function MapPage() {
   };
 
   const fetchDataWithMap = async (mapInstance: google.maps.Map) => {
-    console.log("fetching")
-    
+    console.log("fetching");
+
     const bounds = mapInstance.getBounds();
     if (!bounds) return;
 
@@ -153,6 +154,10 @@ export default function MapPage() {
     }
   };
 
+  useEffect(() => {
+    console.log(points);
+  }, [points]);
+
   const getColor = (co2: number) => {
     if (co2 < 0.5) return "#2ecc71";
     if (co2 < 0.8) return "#f1c40f";
@@ -162,67 +167,23 @@ export default function MapPage() {
   const mapOptions: google.maps.MapOptions = {
     disableDefaultUI: true,
     zoomControl: true,
+    // mapId: "c764e75fad0c9c3cb603c4e6",
     streetViewControl: false,
     fullscreenControl: false,
     mapTypeControl: false,
     styles: [
       {
-        featureType: "all",
-        elementType: "geometry.fill",
         stylers: [
           {
-            weight: "2.00",
+            saturation: -100,
+          },
+          {
+            gamma: 1,
           },
         ],
       },
       {
-        featureType: "all",
-        elementType: "geometry.stroke",
-        stylers: [
-          {
-            color: "#9c9c9c",
-          },
-        ],
-      },
-      {
-        featureType: "all",
-        elementType: "labels.text",
-        stylers: [
-          {
-            visibility: "on",
-          },
-        ],
-      },
-      {
-        featureType: "landscape",
-        elementType: "all",
-        stylers: [
-          {
-            color: "#f2f2f2",
-          },
-        ],
-      },
-      {
-        featureType: "landscape",
-        elementType: "geometry.fill",
-        stylers: [
-          {
-            color: "#ffffff",
-          },
-        ],
-      },
-      {
-        featureType: "landscape.man_made",
-        elementType: "geometry.fill",
-        stylers: [
-          {
-            color: "#ffffff",
-          },
-        ],
-      },
-      {
-        featureType: "poi",
-        elementType: "all",
+        elementType: "labels.text.stroke",
         stylers: [
           {
             visibility: "off",
@@ -230,55 +191,16 @@ export default function MapPage() {
         ],
       },
       {
-        featureType: "road",
-        elementType: "all",
+        featureType: "poi.business",
+        elementType: "labels.text",
         stylers: [
           {
-            saturation: -100,
-          },
-          {
-            lightness: 45,
+            visibility: "off",
           },
         ],
       },
       {
-        featureType: "road",
-        elementType: "geometry.fill",
-        stylers: [
-          {
-            color: "#eeeeee",
-          },
-        ],
-      },
-      {
-        featureType: "road",
-        elementType: "labels.text.fill",
-        stylers: [
-          {
-            color: "#7b7b7b",
-          },
-        ],
-      },
-      {
-        featureType: "road",
-        elementType: "labels.text.stroke",
-        stylers: [
-          {
-            color: "#ffffff",
-          },
-        ],
-      },
-      {
-        featureType: "road.highway",
-        elementType: "all",
-        stylers: [
-          {
-            visibility: "simplified",
-          },
-        ],
-      },
-      {
-        featureType: "road.arterial",
+        featureType: "poi.business",
         elementType: "labels.icon",
         stylers: [
           {
@@ -287,8 +209,8 @@ export default function MapPage() {
         ],
       },
       {
-        featureType: "transit",
-        elementType: "all",
+        featureType: "poi.place_of_worship",
+        elementType: "labels.text",
         stylers: [
           {
             visibility: "off",
@@ -296,41 +218,70 @@ export default function MapPage() {
         ],
       },
       {
-        featureType: "water",
-        elementType: "all",
+        featureType: "poi.place_of_worship",
+        elementType: "labels.icon",
         stylers: [
           {
-            color: "#46bcec",
+            visibility: "off",
           },
+        ],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [
+          {
+            visibility: "simplified",
+          },
+        ],
+      },
+      {
+        featureType: "water",
+        stylers: [
           {
             visibility: "on",
           },
-        ],
-      },
-      {
-        featureType: "water",
-        elementType: "geometry.fill",
-        stylers: [
           {
-            color: "#c8d7d4",
+            saturation: 50,
+          },
+          {
+            gamma: 0,
+          },
+          {
+            hue: "#50a5d1",
           },
         ],
       },
       {
-        featureType: "water",
+        featureType: "administrative.neighborhood",
         elementType: "labels.text.fill",
         stylers: [
           {
-            color: "#070707",
+            color: "#333333",
           },
         ],
       },
       {
-        featureType: "water",
-        elementType: "labels.text.stroke",
+        featureType: "road.local",
+        elementType: "labels.text",
         stylers: [
           {
-            color: "#ffffff",
+            weight: 0.5,
+          },
+          {
+            color: "#333333",
+          },
+        ],
+      },
+      {
+        featureType: "transit.station",
+        elementType: "labels.icon",
+        stylers: [
+          {
+            gamma: 1,
+          },
+          {
+            saturation: 50,
           },
         ],
       },
@@ -344,7 +295,7 @@ export default function MapPage() {
       <GoogleMap
         mapContainerStyle={containerStyle}
         zoom={14}
-        center={{ lat: 28.477064, lng: 77.4819197 }}
+        center={map?.getCenter() ?? { lat: 28.477064, lng: 77.4819197 }}
         onLoad={(m) => {
           setMap(m);
 
@@ -352,7 +303,7 @@ export default function MapPage() {
           fetchDataWithMap(m);
 
           // Fetch only when user stops dragging
-          // m.addListener("dragend", () => fetchDataWithMap(m));
+          m.addListener("dragend", () => fetchDataWithMap(m));
 
           // Fetch when zoom changes
           m.addListener("zoom_changed", () => fetchDataWithMap(m));
