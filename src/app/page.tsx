@@ -8,9 +8,10 @@ import {
   InfoWindow,
   Polygon,
 } from "@react-google-maps/api";
+import * as echarts from "echarts";
 
 const containerStyle = {
-  width: "100vw",
+  width: "100%",
   height: "100vh",
 };
 
@@ -154,10 +155,6 @@ export default function MapPage() {
     }
   };
 
-  useEffect(() => {
-    console.log(points);
-  }, [points]);
-
   const getColor = (co2: number) => {
     if (co2 < 0.5) return "#2ecc71";
     if (co2 < 0.8) return "#f1c40f";
@@ -167,7 +164,8 @@ export default function MapPage() {
   const mapOptions: google.maps.MapOptions = {
     disableDefaultUI: true,
     zoomControl: true,
-    // mapId: "c764e75fad0c9c3cb603c4e6",
+    mapId: "c764e75fad0c9c3cb603c4e6",
+    tilt: 10,
     streetViewControl: false,
     fullscreenControl: false,
     mapTypeControl: false,
@@ -288,74 +286,205 @@ export default function MapPage() {
     ],
   };
 
+  useEffect(() => {
+    const chartDom = document.getElementById("chart");
+    if (!chartDom || points.length === 0) return;
+
+    const myChart = echarts.init(chartDom);
+
+    myChart.setOption({
+      backgroundColor: "#111",
+      tooltip: { trigger: "axis" },
+      title: {
+        text: "Air Quality Index Monitor",
+        color: "#fff"
+      },
+      legend: {
+        data: ["Temperature", "Humidity", "CO2"],
+      },
+      xAxis: {
+        type: "category",
+        data: points.map((_, i) => `Cluster ${i + 1}`),
+        axisLabel: { color: "#ccc" },
+      },
+      yAxis: {
+        type: "value",
+        axisLabel: { color: "#ccc" },
+      },
+      series: [
+        {
+          name: "Temperature",
+          type: "bar",
+          data: points.map((p) => Number(p.temperature.toFixed(2))),
+        },
+        {
+          name: "Humidity",
+          type: "bar",
+          data: points.map((p) => Number(p.humidity.toFixed(2))),
+        },
+        {
+          name: "CO2",
+          type: "bar",
+          data: points.map((p) => Number(p.co2.toFixed(2))),
+        },
+        // {
+        //   name: "Pressure",
+        //   type: "bar",
+        //   data: points.map((p) => p.pressure),
+        // },
+      ],
+    });
+
+    return () => {
+      myChart.dispose();
+    };
+  }, [points]);
+
   if (!isLoaded) return <div>Loading...</div>;
 
   return (
     <>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        zoom={14}
-        center={map?.getCenter() ?? { lat: 28.477064, lng: 77.4819197 }}
-        onLoad={(m) => {
-          setMap(m);
+      <div style={{ display: "flex", height: "100vh", width: "100vw" }}>
+        <div
+          id="chart"
+          style={{
+            width: "35%",
+            height: "100%",
+            background: "#111",
+            padding: "10px",
+          }}
+        />
 
-          // Initial load (only once)
-          fetchDataWithMap(m);
+        <div style={{ width: "65%", height: "100%" }}>
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            zoom={14}
+            center={map?.getCenter() ?? { lat: 28.477064, lng: 77.4819197 }}
+            onLoad={(m) => {
+              setMap(m);
 
-          // Fetch only when user stops dragging
-          m.addListener("dragend", () => fetchDataWithMap(m));
+              fetchDataWithMap(m);
 
-          // Fetch when zoom changes
-          m.addListener("zoom_changed", () => fetchDataWithMap(m));
-        }}
-        options={mapOptions}
-      >
-        {points.map((cluster, index) => (
-          <Polygon
-            key={index}
-            paths={cluster.polygon.map((p: any) => ({
-              lat: p.lat,
-              lng: p.lng,
-            }))}
-            options={{
-              fillColor: getColor(cluster.co2),
-              fillOpacity: 0.5,
-              strokeColor: getColor(cluster.co2),
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
+              m.addListener("dragend", () => fetchDataWithMap(m));
+
+              m.addListener("zoom_changed", () => fetchDataWithMap(m));
             }}
-            onClick={() => setSelected(cluster)}
-          />
-        ))}
-
-        {selected && (
-          <InfoWindow
-            position={{
-              lat: selected.center.lat,
-              lng: selected.center.lng,
-            }}
-            onCloseClick={() => setSelected(null)}
+            options={mapOptions}
           >
-            <div style={{ color: "#000" }}>
-              <p>
-                <b>Temperature:</b> {selected.temperature.toFixed(2)} °C
-              </p>
-              <p>
-                <b>Humidity:</b> {selected.humidity.toFixed(2)} %
-              </p>
-              <p>
-                <b>CO2:</b> {selected.co2.toFixed(2)}
-              </p>
-              <p>
-                <b>Pressure:</b> {selected.pressure.toFixed(2)} hPa
-              </p>
-              <p>
-                <b>Samples merged:</b> {selected.count}
-              </p>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
+            {points.map((cluster, index) => (
+              <Polygon
+                key={index}
+                paths={cluster.polygon.map((p: any) => ({
+                  lat: p.lat,
+                  lng: p.lng,
+                }))}
+                options={{
+                  fillColor: getColor(cluster.co2),
+                  fillOpacity: 0.5,
+                  strokeColor: getColor(cluster.co2),
+                  strokeOpacity: 0.8,
+                  strokeWeight: 2,
+                }}
+                onClick={() => setSelected(cluster)}
+              />
+            ))}
+
+            {selected && (
+              <InfoWindow
+                position={{
+                  lat: selected.center.lat,
+                  lng: selected.center.lng,
+                }}
+                onCloseClick={() => setSelected(null)}
+              >
+                <div
+                  style={{
+                    width: "220px",
+                    // padding: "16px",
+                    borderRadius: "16px",
+                    background: "rgba(255,255,255,0.95)",
+                    backdropFilter: "blur(10px)",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  {/* Header */}
+                  <div
+                    style={{
+                      marginBottom: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        color: "#555",
+                      }}
+                    >
+                      Sensor Cluster
+                    </span>
+
+                    <span
+                      style={{
+                        background: getColor(selected.co2),
+                        color: "#fff",
+                        padding: "4px 8px",
+                        borderRadius: "999px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      CO₂ {selected.co2.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Metrics Grid */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "8px",
+                      fontSize: "13px",
+                    }}
+                  >
+                    <Metric
+                      label="Temp"
+                      value={`${selected.temperature.toFixed(1)} °C`}
+                    />
+                    <Metric
+                      label="Humidity"
+                      value={`${selected.humidity.toFixed(1)} %`}
+                    />
+                    <Metric
+                      label="Pressure"
+                      value={`${selected.pressure.toFixed(1)} hPa`}
+                    />
+                    <Metric label="Samples" value={selected.count} />
+                  </div>
+                </div>
+              </InfoWindow>
+            )}
+          </GoogleMap>
+        </div>
+      </div>
     </>
   );
 }
+
+const Metric = ({ label, value }: { label: string; value: any }) => (
+  <div
+    style={{
+      background: "#f7f7f7",
+      padding: "6px 8px",
+      borderRadius: "8px",
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+    <span style={{ fontSize: "11px", color: "#777" }}>{label}</span>
+    <span style={{ fontWeight: 600, color: "#222" }}>{value}</span>
+  </div>
+);
